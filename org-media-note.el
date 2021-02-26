@@ -30,6 +30,7 @@
 (require 'mpv)
 (require 'org)
 (require 'pretty-hydra)
+(require 'org-attach)
 
 (declare-function org-timer-secs-to-hms "org-timer")
 (declare-function org-timer-hms-to-secs "org-timer")
