@@ -1,10 +1,10 @@
-;;; org-media-note-org-ref.el --- Integrate org-media-note with org-ref -*- lexical-binding: t; -*-
+;;; org-media-note-cite.el --- Integrate org-media-note with reference -*- lexical-binding: t; -*-
 
 ;; Copyright (c) 2021 Yuchen Lea
 
 ;; Author: Yuchen Lea <yuchen.lea@gmail.com>
 ;; URL: https://github.com/yuchen-lea/org-media-note
-;; Package-Requires: ((emacs "27.1") (org-ref "1.1.1"))
+;; Package-Requires: ((emacs "27.1") (bibtex-completion "0"))
 
 
 ;;; Commentary:
@@ -12,7 +12,7 @@
 ;;; Code:
 ;;;; Requirements
 (require 'seq)
-(require 'org-ref)
+(require 'bibtex-completion)
 
 (require 'org-media-note-core)
 
@@ -21,19 +21,33 @@
   "List of BibTeX files that are searched for entry keys."
   :type '(repeat (choice (const :tag "bibtex-file-path" bibtex-file-path)
                          directory file)))
+
+(defcustom org-media-note-citation-formats
+  '(("article"  . "${author}, ${title}, ${journal}, ${volume}(${number}), ${pages} (${year}). ${doi}")
+    ("inproceedings" . "${author}, ${title}, In ${editor}, ${booktitle} (pp. ${pages}) (${year}). ${address}: ${publisher}.")
+    ("book" . "${author}, ${title} (${year}), ${address}: ${publisher}.")
+    ("phdthesis" . "${author}, ${title} (Doctoral dissertation) (${year}). ${school}, ${address}.")
+    ("inbook" . "${author}, ${title}, In ${editor} (Eds.), ${booktitle} (pp. ${pages}) (${year}). ${address}: ${publisher}.")
+    ("incollection" . "${author}, ${title}, In ${editor} (Eds.), ${booktitle} (pp. ${pages}) (${year}). ${address}: ${publisher}.")
+    ("proceedings" . "${editor} (Eds.), ${booktitle} (${year}). ${address}: ${publisher}.")
+    ("unpublished" . "${author}, ${title} (${year}). Unpublished manuscript.")
+    (nil . "${author}, ${title} (${year})."))
+  "Format strings for citation."
+  :type '(alist))
+
 ;;;; Commands
 ;;;;; Help echo
-(defun org-media-note-help-echo (_window _object position)
+(defun org-media-note-cite--help-echo (_window _object position)
   "Return help-echo for ref link at POSITION."
   (save-excursion
     (goto-char position)
-    (let ((s (org-media-note-media-cite-link-message)))
+    (let ((s (org-media-note-cite-link-message)))
       (with-temp-buffer
         (insert s)
         (fill-paragraph)
         (buffer-string)))))
 
-(defun org-media-note-media-cite-link-message ()
+(defun org-media-note-cite-link-message ()
   "Print a minibuffer message about the link that point is on."
   (interactive)
   ;; the way links are recognized in org-element-context counts blank spaces
@@ -55,38 +69,26 @@
                                      (ref-cite-key (car (split-string media-note-link "#")))
                                      (hms (cdr (split-string media-note-link "#"))))
                                 (format "%s @ %s"
-                                        (org-ref-format-entry ref-cite-key)
+                                        (org-media-note-cite-format-entry ref-cite-key)
                                         hms))))))))))
 
-(defun org-media-note-display-media-cite-link-message-in-eldoc (&rest _)
+(defun org-media-note-cite-format-entry (key)
+  "Returns a formatted bibtex entry for KEY."
+  (let ((entry (ignore-errors (bibtex-completion-get-entry key))))
+    (if (null entry)
+        "!!! No entry found !!!"
+      (let* ((entry-type (downcase (bibtex-completion-get-value "=type=" entry)))
+             (format-string (cdr (or (assoc entry-type org-media-note-citation-formats)
+                                     (assoc nil org-media-note-citation-formats))))
+             (ref (s-format format-string 'bibtex-completion-apa-get-value
+                            entry)))
+        (replace-regexp-in-string "\\([.?!]\\)\\."
+                                  "\\1" ref)))))
+
+(defun org-media-note-cite-display-message-in-eldoc (&rest _)
   "Display media's cite link message when `eldoc' enabled."
-  (org-media-note-media-cite-link-message))
+  (org-media-note-cite-link-message))
 
-;;;;; Keymap
-(defun org-media-note-open-ref-cite-function ()
-  "Open a ref-cite link."
-  (interactive)
-  (let* ((object (org-element-context))
-         (media-note-link (if (eq (org-element-type object) 'link)
-                              (org-element-property :path object)))
-         (ref-cite-key (car (split-string media-note-link "#"))))
-    (with-temp-buffer
-      (org-mode)
-      ;; insert bibliography in order to find entry in org-ref
-      (insert (s-join "\n"
-                      (mapcar (lambda (bib)
-                                (format "bibliography:%s" bib))
-                              org-media-note-cite-bibliography)))
-      (insert (format "\ncite:%s" ref-cite-key))
-      (funcall org-ref-cite-onclick-function nil))))
-
-(defcustom org-media-note-cite-keymap
-  (let ((map (copy-keymap org-mouse-map)))
-    (define-key map (kbd "H-o") 'org-media-note-open-ref-cite-function)
-    map)
-  "Keymap for cite links."
-  :type 'symbol
-  :group 'org-media-note)
 
 ;;;;; Link Follow
 (defun org-media-note-cite--open (link)
@@ -134,18 +136,17 @@
 ;;;;; Setup
 
 ;;;###autoload
-(defun org-media-note-setup-org-ref ()
+(defun org-media-note-cite-setup ()
   "Set org link parameters for video/audiocite links."
   (dolist (link '("videocite" "audiocite"))
     (org-link-set-parameters link
                              :follow 'org-media-note-cite--open
-                             :keymap org-media-note-cite-keymap
-                             :help-echo #'org-media-note-help-echo))
+                             :help-echo #'org-media-note-cite--help-echo))
 
   ;; Display media link description in minibuffer when cursor is over it.
   (advice-add #'org-eldoc-documentation-function
-              :before-until #'org-media-note-display-media-cite-link-message-in-eldoc))
+              :before-until #'org-media-note-cite-display-message-in-eldoc))
 
 ;;;; Footer
-(provide 'org-media-note-org-ref)
-;;; org-media-note-org-ref.el ends here
+(provide 'org-media-note-cite)
+;;; org-media-note-cite.el ends here
