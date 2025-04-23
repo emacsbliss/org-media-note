@@ -72,7 +72,7 @@
 (defun org-media-note-insert-note-from-pbf ()
   "Insert note from PBF file."
   (interactive)
-  (let ((key (org-media-note--current-org-ref-key))
+  (let ((key (org-media-note--current-citation-key))
         pbf-file
         media-link-type
         media-file)
@@ -300,7 +300,7 @@ The source of the subtitle counld be:
 (defun org-media-note-insert-note-from-noted ()
   "Insert note from noted txt."
   (interactive)
-  (let ((key (org-media-note--current-org-ref-key))
+  (let ((key (org-media-note--current-citation-key))
         noted-txt
         media-link-type
         media-file)
@@ -386,7 +386,7 @@ The source of the subtitle counld be:
   (let* (key source-media media-link-type media-file)
     (if (org-media-note-ref-cite-p)
         (progn
-          (setq key (org-media-note--current-org-ref-key))
+          (setq key (org-media-note--current-citation-key))
           (setq source-media (org-media-note-cite--file-path key))
           (setq media-file key)
           (setq media-link-type (format "%scite" (org-media-note--file-media-type source-media))))

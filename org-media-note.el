@@ -32,7 +32,7 @@
 
 (require 'org-media-note-core)
 
-(declare-function org-media-note-setup-org-ref "org-media-note-org-ref")
+(declare-function org-media-note-cite-setup "org-media-note-cite")
 
 ;;;; Commands
 ;;;;; UI
@@ -108,8 +108,8 @@ With optional ARG, abbreviate the file name in the link."
       (progn
         (org-media-note--update-auto-insert-advice org-media-note-auto-insert-item)
         (advice-add 'org-beginning-of-line :around #'org-media-note--beginning-of-line-advice)
-        (when org-media-note-use-org-ref
-          (org-media-note-setup-org-ref)))
+        (when org-media-note-use-cite
+          (org-media-note-cite-setup)))
     (org-media-note--update-auto-insert-advice nil)
     (advice-remove 'org-beginning-of-line #'org-media-note--beginning-of-line-advice)))
 
