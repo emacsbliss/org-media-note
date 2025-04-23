@@ -17,8 +17,8 @@
 (declare-function org-timer-hms-to-secs "org-timer" (hms))
 (declare-function org-attach-dir "org-attach")
 
-(declare-function org-media-note-cite--file-path "org-media-note-org-ref" (key))
-(declare-function org-media-note-cite--url "org-media-note-org-ref" (key))
+(declare-function org-media-note-cite--file-path "org-media-note-cite" (key))
+(declare-function org-media-note-cite--url "org-media-note-org-cite" (key))
 
 ;;;; Constants
 
@@ -125,10 +125,10 @@ Based on path, timestamp and desc."
   "List of UTM parameter patterns to be removed from URLs."
   :type '(repeat string))
 
-;;;;; org-ref customization
+;;;;; cite customization
 
-(defcustom org-media-note-use-org-ref nil
-  "Whether to use `org-ref' together with org-media-note."
+(defcustom org-media-note-use-cite nil
+  "Whether to use reference together with org-media-note."
   :type 'boolean)
 
 (defcustom org-media-note-use-refcite-first nil
@@ -136,7 +136,7 @@ Based on path, timestamp and desc."
   :type 'boolean)
 
 (defcustom org-media-note-ref-key-field "Custom_ID"
-  "The property to save `org-ref' key."
+  "The property to save citation key."
   :type 'string)
 
 (defcustom org-media-note-use-inheritance t
@@ -305,8 +305,8 @@ If OMIT-DECIMAL is non-nil, return the integer part only."
                   fff))
       (int-to-string (org-timer-hms-to-secs hms)))))
 
-(defun org-media-note--current-org-ref-key ()
-  "Return the `org-ref' key of current org entry."
+(defun org-media-note--current-citation-key ()
+  "Return the citation key of current org entry."
   (org-entry-get (point) org-media-note-ref-key-field org-media-note-use-inheritance))
 
 (defun org-media-note--current-media-type ()
@@ -334,7 +334,7 @@ If OMIT-DECIMAL is non-nil, return the integer part only."
 
 (defun org-media-note-ref-cite-p ()
   "Return t if refcite link should be used instead of file path, nil otherwise."
-  (and (org-media-note--current-org-ref-key)
+  (and (org-media-note--current-citation-key)
        org-media-note-use-refcite-first))
 
 (defun org-media-note--online-video-p (path)
@@ -436,7 +436,7 @@ This list includes the following elements:
 - current reference key, if available.
 - associated media file for the current ref key, if any.
 - associated media URL for the current ref key, if any."
-  (let ((key (org-media-note--current-org-ref-key)))
+  (let ((key (org-media-note--current-citation-key)))
     (if (org-media-note-ref-cite-p)
         (list t
               key
@@ -520,7 +520,7 @@ This list includes the following elements:
 - Timestamp"
   (let* ((path (mpv-get-property "path"))
          (name (if (org-media-note-ref-cite-p)
-                   (let* ((ref-key (org-media-note--current-org-ref-key))
+                   (let* ((ref-key (org-media-note--current-citation-key))
                           (bib-entry (bibtex-completion-get-entry ref-key))
                           (title (bibtex-completion-get-value "title" bib-entry)))
                      title)
@@ -566,7 +566,7 @@ This list includes the following elements:
                       (if (org-media-note-ref-cite-p)
                           (format "%s (%s)"
                                   title
-                                  (org-media-note--current-org-ref-key))
+                                  (org-media-note--current-citation-key))
                         (if title
                             (format "%s (%s)" title file-path)
                           file-path))))
@@ -765,7 +765,7 @@ This list includes the following elements:
 (defun org-media-note--link-base-file (file-path)
   "Return base file for FILE-PATH."
   (if (org-media-note-ref-cite-p)
-      (org-media-note--current-org-ref-key)
+      (org-media-note--current-citation-key)
     (if (org-media-note--online-video-p file-path)
         file-path
       (org-media-note--format-file-path file-path))))
