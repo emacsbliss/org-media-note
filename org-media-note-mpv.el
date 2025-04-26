@@ -88,6 +88,7 @@ If ARG argument is provided, force playing from beginning."
   (let ((current-speed (mpv-get-property "speed")))
     (mpv-speed-set (+ current-speed speed-step))))
 
+;;;###autoload
 (defun org-media-note-mpv-toggle-speed ()
   "Toggle playback speed of media."
   (interactive)
@@ -102,6 +103,7 @@ If ARG argument is provided, force playing from beginning."
   (mpv-run-command "add" "volume" step)
   (setq org-media-note-last-volume (mpv-get-property "volume")))
 
+;;;###autoload
 (defun org-media-note-mpv-toggle-volume ()
   "Toggle plaback volume of media."
   (interactive)
