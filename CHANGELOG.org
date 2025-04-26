@@ -1,3 +1,8 @@
+- [2025-04-26] Version =1.12.0=
+  + Support capture online video clip or gif when ab-loop
+  + =org-media-note-open-url-at-point= open online video timestamp url
+  + =org-media-note-copy-mpv-command= copy command to debug 
+  + remove hydra, remove dependency of org-ref, s.el
 - [2024-07-02] Version =1.11.0=
   + Import from chapter list
   + Support capture video clip or gif when ab-loop
