@@ -194,8 +194,8 @@ Currently supports SRT, VTT, and ASS."
               (setq time-a (car (split-string time-a "[,\\.]")))
               (setq time-b (car (split-string time-b "[,\\.]"))))
              ((eq org-media-note-timestamp-pattern 'hmsf)
-              (setq time-a (s-replace-regexp "," "." time-a))
-              (setq time-b (s-replace-regexp "," "." time-b))))
+              (setq time-a (replace-regexp-in-string "," "." time-a))
+              (setq time-b (replace-regexp-in-string "," "." time-b))))
             (let* ((timestamp (cond
                                ((string= timestamp-format "time1") time-a)
                                ((string= timestamp-format "time1-time2")
