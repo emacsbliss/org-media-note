@@ -38,17 +38,7 @@
 ;;;; Commands
 ;;;;; UI
 
-(defun org-media-note-show-interface ()
-  "Show the interface based on `org-media-note-interface`."
-  (interactive)
-  (cond
-   ((eq org-media-note-interface 'pretty-hydra)
-    (require 'org-media-note-ui-pretty-hydra)
-    (org-media-note-pretty-hydra/body))
-   ((eq org-media-note-interface 'transient)
-    (require 'org-media-note-ui-transient)
-    (org-media-note-transient))
-   (t (error "Unsupported interface: %s" org-media-note-interface))))
+(defalias 'org-media-note-show-interface #'org-media-note-transient)
 
 ;;;;; Customize Org link
 (defun org-media-note--default-desc-fn (base timestamp desc)
