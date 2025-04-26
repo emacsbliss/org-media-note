@@ -158,6 +158,7 @@
   + =t l= 设置截取ab-loop片段的方法 （=org-media-note-set-ab-loop-capture-method=）
 
 「导入」二级菜单
+
 [[../demo/org-media-note-transient-import.png?raw=true]]
 
 + =I s= 从 srt 字幕文件导入，会尝试搜寻同名srt (=org-media-note-insert-note-from-srt=)
