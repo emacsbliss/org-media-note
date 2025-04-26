@@ -161,6 +161,7 @@ Appearance Position depends on =transient-display-buffer-action=.
   + =t l= Set the method for capturing ab-loop clips (=org-media-note-set-ab-loop-capture-method=)
 
 Secondary Menu - Import Options: 
+
 [[../demo/org-media-note-transient-import.png?raw=true]]
 
 + =I p= Import from PotPlayer PBF file (=org-media-note-insert-note-from-pbf=)
