@@ -28,19 +28,18 @@ Take notes for video and audio files in org-mode! Now supported:
   - TXT: exported by [[https://www.notedapp.io/][Noted]]
   - [[https://orgmode.org/manual/Timers.html][Timers]]
 
-📚 Working with [[https://github.com/jkitchin/org-ref][org-ref]] to get a better experience:
+📚 Working with bib file to get a better experience:
 
-- 🤝 quick open related media file in org-ref note (file path is got from bib file)
+- 🤝 quick open related media file in literature note (file path is got from bib file)
 - 🔗 new link types =videocite=, =audiocite=
   + e.g. =[[videocite:key#0:01:56][0:01:56]]= or =[[videocite:key#0:01:56-0:01:58][0:01:56-0:01:58]]=
   + you can chose to insert =video= or =videocite= link
   + click link to jump to corresponding position, or start A-B loop
   + show bib info when pointing at link
-  + open org-ref action list
 
 * 🎥 Demo
 
-Open related media file in org-ref note，play on top，insert current timestamp and subtitle
+Open related media file，play on top，insert current timestamp and subtitle
 
 [[../demo/org-media-note-add.gif?raw=true]]
 
@@ -56,58 +55,44 @@ Open online video, then operate the same as local files!
 * 🚀 QuickStart
 ℹ️ Currently, you have to install this package from github.
 
-- for doom users：
-  1. Install
-     #+BEGIN_SRC emacs-lisp :tangle "packages.el"
-(package! org-media-note :recipe (:host github :repo "yuchen-lea/org-media-note"))
-     #+END_SRC
-  2. Config
-     + don't use org-ref
-       #+BEGIN_SRC emacs-lisp
-  (use-package! org-media-note
-    :hook (org-mode .  org-media-note-mode)
-    :bind (
-           ("H-v" . org-media-note-show-interface))  ;; Main entrance
-    :config
-    (setq org-media-note-screenshot-image-dir "~/Notes/imgs/")  ;; Folder to save screenshot
-    )
-       #+END_SRC
-     + use org-ref
-       #+BEGIN_SRC emacs-lisp
-  (use-package! org-media-note
-    :init (setq org-media-note-use-org-ref t)
-    :hook (org-mode .  org-media-note-mode)
-    :bind (
-           ("H-v" . org-media-note-show-interface))  ;; Main entrance
-    :config
-    (setq org-media-note-screenshot-image-dir "~/Notes/imgs/")  ;; Folder to save screenshot
-    (setq org-media-note-use-refcite-first t)  ;; use videocite link instead of video link if possible
-    )
-       #+END_SRC
-- for non-doom users: You can
-   1. Manually download org-media-note, include it in your =load-path=, then refers to the above config
-   2. Or use quelpa-use-package (thanks [[https://github.com/japhir][japhir]] for kindly providing this snippet)
-      #+BEGIN_SRC emacs-lisp
-(use-package quelpa-use-package)  ;; to allow installation of github packages
-(use-package org-media-note
-  :quelpa (org-media-note :fetcher github :repo "yuchen-lea/org-media-note")
-  :hook (org-mode .  org-media-note-mode)
-  :bind (("H-v" . org-media-note-show-interface))  ;; Main entrance
-  :config
-  (setq org-media-note-screenshot-image-dir "~/notes/imgs/"))
+1. Install
+   - for doom users：
+      #+BEGIN_SRC emacs-lisp :tangle "packages.el"
+   (package! org-media-note :recipe (:host github :repo "yuchen-lea/org-media-note"))
       #+END_SRC
-   3. If manually loading org-media-note without a package manager like
-      =package.el= or =straight=, you need to =(require 'org-media-note-org-ref)=.
-
-Now, you can access all functions in =org-media-note-show-interface=.
+2. Config
+   + don't use bib file
+     #+BEGIN_SRC emacs-lisp
+(use-package org-media-note
+  :hook (org-mode .  org-media-note-mode)
+  :bind (
+	 ("H-v" . org-media-note-show-interface))  ;; Main entrance
+  :config
+  (setq org-media-note-screenshot-image-dir "~/Notes/imgs/")  ;; Folder to save screenshot
+  )
+     #+END_SRC
+   + use bib file
+     #+BEGIN_SRC emacs-lisp
+(use-package org-media-note
+  :init (setq  org-media-note-use-cite t)
+  :hook (org-mode .  org-media-note-mode)
+  :bind (
+	 ("H-v" . org-media-note-show-interface))  ;; Main entrance
+  :config
+  (setq org-media-note-screenshot-image-dir "~/Notes/imgs/")  ;; Folder to save screenshot
+  (setq org-media-note-use-refcite-first t)  ;; use videocite link instead of video link if possible
+  )
+     #+END_SRC
+3. Now, you can access all functions in =org-media-note-show-interface=.
 
 ℹ️ Here, I use Hyper key =H= for keybinding. In this way, I can quickly access personal functions, and no major or minor modes will stamp on my keys. Look into this for more information: [[http://ergoemacs.org/emacs/emacs_hyper_super_keys.html][Emacs: How to Bind Super Hyper Keys]]. Or you can bind it to any other key you like. After all, it's Emacs ;)
 * 📖 Functions
 
-All functions are accessible via =org-media-note-show-interface=. Depending on the value of the =org-media-note-interface=, =org-media-note-pretty-hydra/body= or =org-media-note-transient= will be called:
+All features can be accessed from =org-media-note-show-interface=.  To accommodate a more compact layout, the functions have been grouped accordingly:
 
-** pretty-hydra ui
-[[../demo/org-media-note-hydra.png?raw=true]]
+[[../demo/org-media-note-transient.png?raw=true]]
+
+Appearance Position depends on =transient-display-buffer-action=.
 
 - Header：Display basic info, file path, volume, duration and so on
 - File：Functions about media file
@@ -120,26 +105,27 @@ All functions are accessible via =org-media-note-show-interface=. Depending on t
          - Your media file extension is included in =org-media-note--video-types= or =org-media-note--audio-types=
     3. When media files found in org-attach-dir, open this file if there's only one file, else, let user chose file from attach directory.
     4. Else, find the file by yourself.
-  + =j= Cycle through subtitles
   + =T= Toggle video window on top of other windows
   + =c= Increase speed by 0.1
   + =x= Decrease speed by 0.1
   + =z= Toggle speed between 1.0 and last customized speed (=org-media-note-mpv-toggle-speed=)
+- Volume：Functions about volume
+  + =+= add volume 5
+  + =-= add volume -5
+  + =0= Toggle volume between 100 and last customized volume (=org-media-note-mpv-toggle-volume=)
+  + =m= mute/unmute
 - Playback：Functions about playing media file
   + =<SPC>= pause/unpause
+  + =t p= When on，auto pause media after inserting media link. (=org-media-note-toggle-pause-after-insertion=)
   + =l= Set/clear A-B loop points, show points info if possible
   + =g= jump to the position found in current line, useful when you're browsing related subtitles. If no timestamp found, manually input the timestamp.
+  + =t <right>=: Set the step for controlling playback progress. Supports: seconds, percentage, or frames. (=org-media-note-set-seek-method=)
   + =<left>= Forward 5s (default). Step can be customized by =t <right>=.
   + =<right>= Backward 5s (default). Step can be customized by =t <right>=.
   + =C-<left>= Skip to previous subtitle
   + =C-<right>= Skip to next subtitle
   + =<prior>= (=<PgUp>=) Previous chapter
   + =<next>= (=<PgDown>=) Next chapter
-- Volume：Functions about volume
-  + =+= add volume 5
-  + =-= add volume -5
-  + =0= Toggle volume between 100 and last customized volume (=org-media-note-mpv-toggle-volume=)
-  + =m= mute/unmute
 - Note：Functions about insert notes
   + =i= Insert current link, there're several links according to customization and playing state: (=org-media-note-insert-link=)
     - A-B Loop?
@@ -152,6 +138,16 @@ All functions are accessible via =org-media-note-show-interface=. Depending on t
     - 💡 Video path format is consistent with =org-link-file-path-type=
     - 💡 When set =org-media-note-cursor-start-position= to =before= , move cursor to the start of link after insertion. This works for manual insertion only. Cursor is always at the end of link for those auto inserted by =<M-return>=.
   + =a= Adjust current link position to current playing position. Then, apply this offset to all links under current heading.
+  + =t m= When in a list like =- [[video:video.mp4#00:03:24][00:03:24]] description=, =<M-return>= will auto insert media link if this toggles on. (=org-media-note-toggle-auto-insert-item=)
+  + =I= Opens the "Import" submenu
+  + =s= Insert current subtitle text (=org-media-note-insert-sub-text=)
+  + =j= Cycle through subtitles
+  + =H-m= Merge the selected items into one, keeping only the timestamp of the first item. Suitable for processing after importing subtitles. (=org-media-note-merge-item=)
+  + =t M= Set the separator to be used when merging the selected items. (=org-media-note-set-separator=)
+- Note Format：
+  + =t t= Toggle timestamp format between =hh:mm:ss= and =hh:mm:ss.fff= (=org-media-note-toggle-timestamp-pattern=)
+  + =t c= Enable prioritization of =videocite= or =audiocite= links over =video= or =audio= links when toggled on (=org-media-note-toggle-refcite=)
+- Screenshot & Clip：
   + =S= If there is no ab-loop currently, insert the current video screenshot (=org-media-note-insert-screenshot=), otherwise insert the current ab-loop's video clip or GIF (=org-media-note-capture-ab-loop-and-insert=).
     - ℹ️ variables related:
       + =org-media-note-screenshot-save-method= : customize the place to save screenshot
@@ -160,52 +156,25 @@ All functions are accessible via =org-media-note-show-interface=. Depending on t
       + =org-media-note-screenshot-link-type-when-save-in-attach-dir= when save screenshots to attach dir, use file link or attachment link
       + Screenshot path format is consistent with =org-link-file-path-type= in file: link
       + =org-media-note-capture-ab-loop-functions-alist= defines the list of functions for capturing ab-loop clips, with the default being capturing the original clip and converting it to GIF.
-  + =s= Insert current subtitle text (=org-media-note-insert-sub-text=)
-  + =H-m= Merge the selected items into one, keeping only the timestamp of the first item. Suitable for processing after importing subtitles. (=org-media-note-merge-item=)
-- Import: Import notes from other format
-  + =I p= Import from PotPlayer PBF file (=org-media-note-insert-note-from-pbf=)
-  + =I n= Import from Noted TXT file (=org-media-note-insert-note-from-noted=)
-  + =I t= Import from org-timer (=org-media-note-convert-from-org-timer=)
-  + =I s= Import from srt (=org-media-note-insert-note-from-srt=)
-  + =I c= Import from the chapter list (=org-media-note-insert-note-from-chapter-list=)
-- Config：Customization
-  + =t m= When in a list like =- [[video:video.mp4#00:03:24][00:03:24]] description=, =<M-return>= will auto insert media link if this toggles on. (=org-media-note-toggle-auto-insert-item=)
   + =t s= When on， =<M-return>= will auto insert both media link and current screenshot. (=org-media-note-toggle-save-screenshot=)
   + =t S= When on，save screenshot with subtitles (=org-media-note-toggle-screenshot-with-sub=)
   + =t l= Set the method for capturing ab-loop clips (=org-media-note-set-ab-loop-capture-method=)
-  + =t c= When on，insert =videocite= or =audiocite= link instead of =video= or =audio= link if possible. (=org-media-note-toggle-refcite=)
-  + =t p= When on，auto pause media after inserting media link. (=org-media-note-toggle-pause-after-insertion=)
-  + =t t= Toggle timestamp format between =hh:mm:ss= and =hh:mm:ss.fff= (=org-media-note-toggle-timestamp-pattern=)
-  + =t M= Set the separator to be used when merging the selected items. (=org-media-note-set-separator=)
-  + =t <right>=: Set the step for controlling playback progress. Supports: seconds, percentage, or frames. (=org-media-note-set-seek-method=)
 
-ℹ️ Corresponding function is in the brackets. Those without brackets usually call mpv commands directly. More info refers =org-media-note-pretty-hydra=.
+Secondary Menu - Import Options: 
+[[../demo/org-media-note-transient-import.png?raw=true]]
 
-** transient ui
++ =I p= Import from PotPlayer PBF file (=org-media-note-insert-note-from-pbf=)
++ =I n= Import from Noted TXT file (=org-media-note-insert-note-from-noted=)
++ =I t= Import from org-timer (=org-media-note-convert-from-org-timer=)
++ =I s= Import from srt (=org-media-note-insert-note-from-srt=)
++ =I c= Import from the chapter list (=org-media-note-insert-note-from-chapter-list=)
 
-The transient interface has the same functions and key bindings as the pretty-hydra interface.
-
-To accommodate a more compact layout, config commands are semantically grouped:
-
-[[../demo/org-media-note-transient.png?raw=true]]
-
-** transient vs pretty-hydra
-
-The interactive logic is consistent. If a shortcut key that is not within the interface is typed, the interface will exit and the corresponding command will be executed.
-
-|                     | transient                                     | pretty-hydra                              |
-|---------------------+-----------------------------------------------+-------------------------------------------|
-| Dependency          | Built-in since Emacs 28                       | [[https://github.com/jerrypnz/major-mode-hydra.el][pretty-hydra]]                              |
-| Appearance Position | Depends on =transient-display-buffer-action=  | Bottom of the current frame               |
-| ui                  | [[../demo/org-media-note-transient.png?raw=true]] | [[../demo/org-media-note-hydra.png?raw=true]] |
+ℹ️ Corresponding function is in the brackets. 
 
 * 🛠️ Dependencies
 - [[https://github.com/kljohann/mpv.el][mpv.el]] control media inside emacs
-- Currently provides two frontends, customizable via =org-media-note-interface=:
-  + [[https://github.com/magit/transient][transient]] (default): Built into Emacs since version 28, displayed at the bottom of the current window.
-  + [[https://github.com/jerrypnz/major-mode-hydra.el][pretty-hydra]]: create an amiable hydra, displayed at the bottom of the current frame.
+- =bibtex-completion= is not required, but it's worth to have a try if you use bib to manage your media file!
 
- [[https://github.com/jkitchin/org-ref][org-ref]] is not required, but it's worth to have a try if you use bib to manage your media file!
 ** 🌐 Online Video
 
 Using org-media-note for online video notes relies on mpv's streaming feature and requires additional external dependencies. It requires the installation of [[https://github.com/yt-dlp/yt-dlp?tab=readme-ov-file#installation][yt-dlp]] to download videos from websites. You can find the list of supported websites [[https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md][here]]. yt-dlp is smoother and more powerful than youtube-dl, which is the default used by mpv. If you want to play online videos but haven't installed yt-dlp, org-media-note will raise an error.
