@@ -60,6 +60,7 @@ If ARG argument is provided, force playing from beginning."
   (let ((video-url (read-string "Url to play: ")))
     (org-media-note--follow-link video-url)))
 
+;;;###autoload
 (defun org-media-note-seek (direction)
   "Seek in the given DIRECTION according to the configured method and value."
   (interactive)
@@ -83,6 +84,7 @@ If ARG argument is provided, force playing from beginning."
               (when (not was-pause)
                 (mpv-run-command "set_property" "pause" "no"))))))
 
+;;;###autoload
 (defun org-media-note-change-speed-by (speed-step)
   "Modify playing media's speed by SPEED-STEP."
   (let ((current-speed (mpv-get-property "speed")))
@@ -98,6 +100,7 @@ If ARG argument is provided, force playing from beginning."
       (setq org-media-note-last-play-speed current-speed)
       (mpv-speed-set 1))))
 
+;;;###autoload
 (defun org-media-note-change-volume-by (step)
   "Set playing volume by STEP."
   (mpv-run-command "add" "volume" step)

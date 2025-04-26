@@ -7,6 +7,7 @@
 
 (require 'org-media-note-core)
 
+(declare-function org-media-note-cite--file-path "org-media-note-cite" (key))
 
 ;;;; Customization
 
