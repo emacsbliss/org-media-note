@@ -71,13 +71,6 @@ group 4: description tag")
           (const :tag "ido-completing-read" ido-completing-read)
           (const :tag "completing-read" completing-read)))
 
-(defcustom org-media-note-interface 'transient
-  "The interface to use for org-media-note."
-  :type '(choice
-          (const :tag "pretty-hydra" pretty-hydra)
-          (const :tag "transient" transient)))
-
-
 (defcustom org-media-note-interface-display-browse-url t
   "When non-nil, display browse url command in transient."
   :type 'boolean)
