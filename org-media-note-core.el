@@ -512,18 +512,20 @@ This list includes the following elements:
 - Media file name
 - Timestamp"
   (let* ((path (mpv-get-property "path"))
-         (name (if (org-media-note-ref-cite-p)
+         (escaped-path (when path (org-link-escape path))) ; Escape file path, thanks @v-Nyo  #66
+         (name (if (and path (org-media-note-ref-cite-p))
                    (let* ((ref-key (org-media-note--current-citation-key))
                           (bib-entry (bibtex-completion-get-entry ref-key))
-                          (title (bibtex-completion-get-value "title" bib-entry)))
+                          (title (when bib-entry (bibtex-completion-get-value "title" bib-entry))))
                      title)
-                 (if (org-media-note--online-video-p path)
-                     (mpv-get-property "media-title")
-                   nil)))
+                 (when path
+                   (if (org-media-note--online-video-p path)
+                       (mpv-get-property "media-title")
+                     nil))))
          (timestamp (org-media-note--get-current-timestamp)))
-    (list (if (org-media-note--online-video-p path)
-              (org-media-note--remove-utm-parameters path)
-            path)
+    (list (if (and path (org-media-note--online-video-p path))
+              (org-media-note--remove-utm-parameters escaped-path)
+            escaped-path)
           name
           timestamp)))
 
