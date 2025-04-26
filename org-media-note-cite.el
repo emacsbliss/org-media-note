@@ -22,18 +22,9 @@
   :type '(repeat (choice (const :tag "bibtex-file-path" bibtex-file-path)
                          directory file)))
 
-(defcustom org-media-note-citation-formats
-  '(("article"  . "${author}, ${title}, ${journal}, ${volume}(${number}), ${pages} (${year}). ${doi}")
-    ("inproceedings" . "${author}, ${title}, In ${editor}, ${booktitle} (pp. ${pages}) (${year}). ${address}: ${publisher}.")
-    ("book" . "${author}, ${title} (${year}), ${address}: ${publisher}.")
-    ("phdthesis" . "${author}, ${title} (Doctoral dissertation) (${year}). ${school}, ${address}.")
-    ("inbook" . "${author}, ${title}, In ${editor} (Eds.), ${booktitle} (pp. ${pages}) (${year}). ${address}: ${publisher}.")
-    ("incollection" . "${author}, ${title}, In ${editor} (Eds.), ${booktitle} (pp. ${pages}) (${year}). ${address}: ${publisher}.")
-    ("proceedings" . "${editor} (Eds.), ${booktitle} (${year}). ${address}: ${publisher}.")
-    ("unpublished" . "${author}, ${title} (${year}). Unpublished manuscript.")
-    (nil . "${author}, ${title} (${year})."))
-  "Format strings for citation."
-  :type '(alist))
+(defcustom org-media-note-cite-format-fn #'org-media-note-cite-format-entry
+  "Function to format citation entries."
+  :type 'function)
 
 ;;;; Commands
 ;;;;; Help echo
@@ -69,21 +60,21 @@
                                      (ref-cite-key (car (split-string media-note-link "#")))
                                      (hms (cdr (split-string media-note-link "#"))))
                                 (format "%s @ %s"
-                                        (org-media-note-cite-format-entry ref-cite-key)
+					(funcall org-media-note-cite-format-fn ref-cite-key)
                                         hms))))))))))
+
 
 (defun org-media-note-cite-format-entry (key)
   "Returns a formatted bibtex entry for KEY."
   (let ((entry (ignore-errors (bibtex-completion-get-entry key))))
     (if (null entry)
         "!!! No entry found !!!"
-      (let* ((entry-type (downcase (bibtex-completion-get-value "=type=" entry)))
-             (format-string (cdr (or (assoc entry-type org-media-note-citation-formats)
-                                     (assoc nil org-media-note-citation-formats))))
-             (ref (s-format format-string 'bibtex-completion-apa-get-value
-                            entry)))
-        (replace-regexp-in-string "\\([.?!]\\)\\."
-                                  "\\1" ref)))))
+      (let* ((series (bibtex-completion-get-value "series" entry))
+	     (title (bibtex-completion-get-value "title" entry))
+             )
+	(if series
+	    (format "%s: %s" series title)
+	  title)))))
 
 (defun org-media-note-cite-display-message-in-eldoc (&rest _)
   "Display media's cite link message when `eldoc' enabled."
@@ -111,22 +102,25 @@
 (defun org-media-note-cite--file-path (key)
   "Get media file by KEY."
   (let* ((files (bibtex-completion-find-pdf key))
-         (video-files (seq-filter (lambda (elt)
-                                    (s-matches-p (rx (eval (cons 'or org-media-note--video-types))
-                                                     eos)
-                                                 elt))
-                                  files))
-         (audio-files (seq-filter (lambda (elt)
-                                    (s-matches-p (rx (eval (cons 'or org-media-note--audio-types))
-                                                     eos)
-                                                 elt))
-                                  files)))
+	 (video-files (org-media-note--filter-by-extensions files org-media-note--video-types))
+	 (audio-files (org-media-note--filter-by-extensions files org-media-note--audio-types)))
     (cond
      ;; TODO when multiple media files?
      (video-files (file-truename (nth 0 video-files)))
      (audio-files (file-truename (nth 0 audio-files)))
      (t nil))))
 
+(defun org-media-note--filter-by-extensions (file-list extensions)
+    "Filter files from FILE-LIST whose extensions belong to EXTENSIONS."
+    (let ((result '())
+          (ext-list (if (stringp extensions)
+                        (list extensions)
+                      extensions)))
+      (dolist (file file-list)
+        (let ((ext (downcase (file-name-extension file))))
+          (when (and ext (member ext ext-list))
+            (push file result))))
+      (nreverse result)))
 
 (defun org-media-note-cite--url (key)
   "Get URL by KEY."

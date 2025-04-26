@@ -551,25 +551,25 @@ This list includes the following elements:
                 (volume (mpv-get-property "volume"))
                 (total-timestamp (org-media-note--get-duration-timestamp))
                 (remaining-hms (org-media-note--seconds-to-timestamp (mpv-get-property "playtime-remaining"))))
-            (s-concat icon
-                      " org-media-note: "
-                      current-timestamp
-                      " / "
-                      total-timestamp
-                      "\t Volume: "
-                      (number-to-string volume)
-                      "\t Speed: "
-                      (number-to-string speed)
-                      "\t Remaining: "
-                      remaining-hms
-                      "\n\t❯ "
-                      (if (org-media-note-ref-cite-p)
-                          (format "%s (%s)"
-                                  title
-                                  (org-media-note--current-citation-key))
-                        (if title
-                            (format "%s (%s)" title file-path)
-                          file-path))))
+            (concat icon
+                    " org-media-note: "
+                    current-timestamp
+                    " / "
+                    total-timestamp
+                    "\t Volume: "
+                    (number-to-string volume)
+                    "\t Speed: "
+                    (number-to-string speed)
+                    "\t Remaining: "
+                    remaining-hms
+                    "\n\t❯ "
+                    (if (org-media-note-ref-cite-p)
+                        (format "%s (%s)"
+                                title
+                                (org-media-note--current-citation-key))
+                      (if title
+                          (format "%s (%s)" title file-path)
+                        file-path))))
         ;; Title when no media is playing
         (concat icon " org-media-note")))))
 
