@@ -6,7 +6,7 @@
 ;; URL: https://github.com/yuchen-lea/org-media-note
 ;; Version: 1.12.0
 ;; Keywords: note-taking, multimedia, video
-;; Package-Requires: ((emacs "24.4") (transient "0.1.0") (mpv "0.2.0"))
+;; Package-Requires: ((emacs "27.1") (transient "0.1.0") (mpv "0.2.0"))
 
 
 ;;; Commentary:
@@ -33,6 +33,8 @@
 (require 'transient)
 
 (require 'org-media-note-core)
+(require 'org-media-note-mpv)
+(require 'org-media-note-import)
 
 (declare-function org-media-note-cite-setup "org-media-note-cite")
 

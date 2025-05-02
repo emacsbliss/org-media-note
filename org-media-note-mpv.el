@@ -15,7 +15,6 @@
   "Last Volume in mpv.")
 
 ;;;; Commands
-
 (defun org-media-note-play-smart (arg)
   "Conditionally open media file in mpv based on the current context.
 1. Point at a file/http/media link: play it in mpv;
@@ -60,7 +59,6 @@ If ARG argument is provided, force playing from beginning."
   (let ((video-url (read-string "Url to play: ")))
     (org-media-note--follow-link video-url)))
 
-;;;###autoload
 (defun org-media-note-seek (direction)
   "Seek in the given DIRECTION according to the configured method and value."
   (interactive)
@@ -84,13 +82,11 @@ If ARG argument is provided, force playing from beginning."
               (when (not was-pause)
                 (mpv-run-command "set_property" "pause" "no"))))))
 
-;;;###autoload
 (defun org-media-note-change-speed-by (speed-step)
   "Modify playing media's speed by SPEED-STEP."
   (let ((current-speed (mpv-get-property "speed")))
     (mpv-speed-set (+ current-speed speed-step))))
 
-;;;###autoload
 (defun org-media-note-mpv-toggle-speed ()
   "Toggle playback speed of media."
   (interactive)
@@ -100,13 +96,11 @@ If ARG argument is provided, force playing from beginning."
       (setq org-media-note-last-play-speed current-speed)
       (mpv-speed-set 1))))
 
-;;;###autoload
 (defun org-media-note-change-volume-by (step)
   "Set playing volume by STEP."
   (mpv-run-command "add" "volume" step)
   (setq org-media-note-last-volume (mpv-get-property "volume")))
 
-;;;###autoload
 (defun org-media-note-mpv-toggle-volume ()
   "Toggle plaback volume of media."
   (interactive)
