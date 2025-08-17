@@ -138,6 +138,12 @@ Based on path, timestamp and desc."
           (const :tag "Don't use inheritance" nil)
           (const :tag "Inherit parent node ref key" t)))
 
+(defcustom org-media-note-ref-key-process-fn #'org-media-note--default-ref-key-process
+  "Function to process citation key after retrieving from property.
+The function should accept one argument (the raw key string) and return
+the processed key string."
+  :type 'function)
+
 ;;;;; screenshot customization
 
 (defcustom org-media-note-screenshot-save-method 'directory
@@ -298,9 +304,18 @@ If OMIT-DECIMAL is non-nil, return the integer part only."
                   fff))
       (int-to-string (org-timer-hms-to-secs hms)))))
 
+(defun org-media-note--default-ref-key-process (key)
+  "Default function to process citation key.
+Strips '@' prefix if present to support org-roam ROAM_REFS format."
+  (when key
+    (string-remove-prefix "@" key)))
+
 (defun org-media-note--current-citation-key ()
-  "Return the citation key of current org entry."
-  (org-entry-get (point) org-media-note-ref-key-field org-media-note-use-inheritance))
+  "Return the citation key of current org entry.
+Uses `org-media-note-ref-key-process-fn' to process the raw key."
+  (let ((raw-key (org-entry-get (point) org-media-note-ref-key-field org-media-note-use-inheritance)))
+    (when raw-key
+      (funcall org-media-note-ref-key-process-fn raw-key))))
 
 (defun org-media-note--current-media-type ()
   "Get current playing media type."
