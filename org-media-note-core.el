@@ -437,47 +437,61 @@ This list includes the following elements:
               (org-media-note-cite--url key))
       (list nil nil nil nil))))
 
-(defun org-media-note--link-context ()
-  "Return a list with info about the link at point.
+(defun org-media-note--element-context ()
+  "Return a list with info about the media-relevant element at point.
+This function handles both links and org-cite citation references.
 This list includes the following elements:
-- link type.
+- element type (link type for links, 'citation' for citation-reference).
 - file absolute path or URL path.
 - start time if available.
 - end time if available."
   (let ((element (org-element-context)))
-    (if (eq (org-element-type element) 'link)
-        (let* ((link-type (org-element-property :type element))
-               (link-path (org-element-property :path element))
-               (org-yt-type (or (bound-and-true-p org-yt-url-protocol)
-                                "yt"))
-               (supported-link (member link-type `("file" "http" "https" "attachment" "audio"
-                                                   "video" "audiocite" "videocite" ,org-yt-type))))
-          (if supported-link
-              (if (member link-type '("audio" "video" "audiocite" "videocite"))
-                  (cl-multiple-value-bind (path-or-key start-time end-time)
-                      (org-media-note--split-link link-path)
-                    (let ((path-or-url (cond
-                                        ((member link-type '("audio" "video"))
-                                         (if (org-media-note--online-video-p path-or-key)
-                                             path-or-key
-                                           (expand-file-name path-or-key)))
-                                        ((member link-type '("audiocite" "videocite"))
-                                         (org-media-note-cite--path path-or-key)))))
-                      (list link-type path-or-url start-time end-time)))
-                (let* ((path-with-type (format "%s:%s" link-type link-path))
-                       (path-or-url (cond
-                                     ((string= link-type "file")
-                                      (expand-file-name link-path))
-                                     ((string= link-type "attachment")
-                                      (expand-file-name link-path
-                                                        (org-attach-dir)))
-                                     ((org-media-note--online-video-p path-with-type) path-with-type)
-                                     ((string= link-type org-yt-type)
-                                      (concat "https://youtu.be/" link-path))
-                                     (t nil))))
-                  (list link-type path-or-url nil nil)))
-            (list link-type link-path nil nil)))
-      (list nil nil nil nil))))
+    (cond
+     ;; Handle org-mode links
+     ((eq (org-element-type element) 'link)
+      (let* ((link-type (org-element-property :type element))
+             (link-path (org-element-property :path element))
+             (org-yt-type (or (bound-and-true-p org-yt-url-protocol)
+                              "yt"))
+             (supported-link (member link-type `("file" "http" "https" "attachment" "audio"
+"video" "audiocite" "videocite" ,org-yt-type))))
+        (if supported-link
+            (if (member link-type '("audio" "video" "audiocite" "videocite"))
+                (cl-multiple-value-bind (path-or-key start-time end-time)
+                    (org-media-note--split-link link-path)
+                  (let ((path-or-url (cond
+                                      ((member link-type '("audio" "video"))
+                                       (if (org-media-note--online-video-p path-or-key)
+                                           path-or-key
+                                         (expand-file-name path-or-key)))
+                                      ((member link-type '("audiocite" "videocite"))
+                                       (org-media-note-cite--path path-or-key)))))
+                    (list link-type path-or-url start-time end-time)))
+              (let* ((path-with-type (format "%s:%s" link-type link-path))
+                     (path-or-url (cond
+                                   ((string= link-type "file")
+                                    (expand-file-name link-path))
+                                   ((string= link-type "attachment")
+                                    (expand-file-name link-path
+                                                      (org-attach-dir)))
+                                   ((org-media-note--online-video-p path-with-type) path-with-type)
+                                   ((string= link-type org-yt-type)
+                                    (concat "https://youtu.be/" link-path))
+                                   (t nil))))
+                (list link-type path-or-url nil nil)))
+          (list link-type link-path nil nil))))
+     
+     ;; Handle org-cite citation references
+     ((eq (org-element-type element) 'citation-reference)
+      (let* ((cite-key (org-element-property :key element))
+             (cite-path (when cite-key 
+                          (org-media-note-cite--path cite-key))))
+        (if cite-path
+            (list "citation" cite-path nil nil)
+          (list nil nil nil nil))))
+     
+     ;; Default case: no relevant element found
+     (t (list nil nil nil nil)))))
 
 (defun org-media-note--split-link (link)
   "Split a `LINK' into path, time-a and time-b."
@@ -569,14 +583,15 @@ This list includes the following elements:
         (concat icon " org-media-note")))))
 
 (defun org-media-note--ui-play-smart-title ()
-  (cl-multiple-value-bind (link _ _ _)
-      (org-media-note--link-context)
+  (cl-multiple-value-bind (element-type _ _ _)
+      (org-media-note--element-context)
     (cl-multiple-value-bind (ref-mode key _ _)
         (org-media-note--ref-context)
       (cl-multiple-value-bind (_ media-files-in-attach-dir)
           (org-media-note--attach-context)
         (cond
-         (link "Open link")
+         ((string= element-type "citation") "Open citation")
+         (element-type "Open link")
          (ref-mode (format "Open %s" key))
          ((> (length media-files-in-attach-dir) 0) "Open attach")
          (t "Open media"))))))
