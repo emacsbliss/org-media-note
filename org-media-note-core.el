@@ -544,8 +544,7 @@ This list includes the following elements:
          (escaped-path (when path (org-link-escape path))) ; Escape file path, thanks @v-Nyo  #66
          (name (if (and path (org-media-note-ref-cite-p))
                    (let* ((ref-key (org-media-note--current-citation-key))
-                          (bib-entry (bibtex-completion-get-entry ref-key))
-                          (title (when bib-entry (bibtex-completion-get-value "title" bib-entry))))
+                          (title (org-media-note-cite-get-value ref-key "title")))
                      title)
                  (when path
                    (if (org-media-note--online-video-p path)

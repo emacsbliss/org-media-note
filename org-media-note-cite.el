@@ -4,7 +4,6 @@
 
 ;; Author: Yuchen Lea <yuchen.lea@gmail.com>
 ;; URL: https://github.com/yuchen-lea/org-media-note
-;; Package-Requires: ((emacs "27.1") (bibtex-completion "0"))
 
 
 ;;; Commentary:
@@ -12,7 +11,6 @@
 ;;; Code:
 ;;;; Requirements
 (require 'seq)
-(require 'bibtex-completion)
 
 (require 'org-media-note-core)
 
@@ -27,6 +25,36 @@
   :type 'function)
 
 ;;;; Commands
+;;;;; bib handling
+(defun org-media-note-cite-get-entry (key)
+  "Get the value of an entry's FIELD with KEY.  Return string."
+  (cond
+   ((fboundp 'citar-get-entry)
+    (citar-get-entry key))
+   ((fboundp 'bibtex-completion-get-entry)
+    (bibtex-completion-get-entry key)
+   (t (message "Either citar or bibtex-completion should be installed!")))))
+
+(defun org-media-note-cite-get-value (key field)
+  "Get the value of an entry's FIELD with KEY.  Return string."
+  (cond
+   ((fboundp 'citar-get-value)
+    (citar-get-value field key))
+   ((fboundp 'bibtex-completion-get-value)
+    (bibtex-completion-get-value field
+				 (org-media-note-cite-get-entry key))
+   (t (message "Either citar or bibtex-completion should be installed!")))))
+
+(defun org-media-note-cite-get-files (key)
+  "Get the value of an entry's FIELD with KEY.  Return string."
+  (cond
+   ((fboundp 'citar-get-files)
+    (gethash key (citar-get-files key)))
+   ((fboundp 'bibtex-completion-find-pdf-in-field)
+    (bibtex-completion-find-pdf-in-field key)
+   (t (message "Either citar or bibtex-completion should be installed!")))))
+
+
 ;;;;; Help echo
 (defun org-media-note-cite--help-echo (_window _object position)
   "Return help-echo for ref link at POSITION."
@@ -66,11 +94,11 @@
 
 (defun org-media-note-cite-format-entry (key)
   "Returns a formatted bibtex entry for KEY."
-  (let ((entry (ignore-errors (bibtex-completion-get-entry key))))
+  (let ((entry (ignore-errors (org-media-note-cite-get-entry key))))
     (if (null entry)
         "!!! No entry found !!!"
-      (let* ((series (bibtex-completion-get-value "series" entry))
-	     (title (bibtex-completion-get-value "title" entry))
+      (let* ((series (org-media-note-cite-get-value key "series"))
+	     (title (org-media-note-cite-get-value key "title"))
              )
 	(if series
 	    (format "%s: %s" series title)
@@ -101,7 +129,7 @@
 
 (defun org-media-note-cite--file-path (key)
   "Get media file by KEY."
-  (let* ((files (bibtex-completion-find-pdf key))
+  (let* ((files (org-media-note-cite-get-files key))
 	 (video-files (org-media-note--filter-by-extensions files org-media-note--video-types))
 	 (audio-files (org-media-note--filter-by-extensions files org-media-note--audio-types)))
     (cond
@@ -127,8 +155,8 @@
 (defun org-media-note-cite--url (key)
   "Get URL by KEY."
   (if key
-      (let ((entry (bibtex-completion-get-entry1 key t)))
-        (bibtex-completion-get-value "url" entry))))
+      (org-media-note-cite-get-value key "url")))
+
 ;;;;; Setup
 
 ;;;###autoload
