@@ -442,15 +442,13 @@ MEDIA-TITLE is the title of the current media, used for some save methods."
 This list includes the following elements:
 - use `org-ref' mode or not.
 - current reference key, if available.
-- associated media file for the current ref key, if any.
-- associated media URL for the current ref key, if any."
+- associated media file or URL for the current ref key, if any."
   (let ((key (org-media-note--current-citation-key)))
     (if (org-media-note-ref-cite-p)
         (list t
               key
-              (org-media-note-cite--file-path key)
-              (org-media-note-cite--url key))
-      (list nil nil nil nil))))
+              (org-media-note-cite--path key))
+      (list nil nil nil))))
 
 (defun org-media-note--element-context ()
   "Return a list with info about the media-relevant element at point.
@@ -597,18 +595,25 @@ This list includes the following elements:
         (concat icon " org-media-note")))))
 
 (defun org-media-note--ui-play-smart-title ()
-  (cl-multiple-value-bind (element-type _ _ _)
-      (org-media-note--element-context)
-    (cl-multiple-value-bind (ref-mode key _ _)
-        (org-media-note--ref-context)
-      (cl-multiple-value-bind (_ media-files-in-attach-dir)
-          (org-media-note--attach-context)
-        (cond
-         ((string= element-type "citation") "Open citation")
-         (element-type "Open link")
-         (ref-mode (format "Open %s" key))
-         ((> (length media-files-in-attach-dir) 0) "Open attach")
-         (t "Open media"))))))
+  (let* ((element (org-element-context))
+         (element-type (cond
+                        ((eq (org-element-type element) 'citation-reference) "citation")
+                        ((eq (org-element-type element) 'link)
+                         (let ((link-type (org-element-property :type element)))
+                           (when (member link-type '("file" "http" "https" "attachment" "audio"
+                                                     "video" "audiocite" "videocite"))
+                             link-type)))
+                        (t nil)))
+         (key (org-media-note--current-citation-key))
+         (ref-mode (org-media-note-ref-cite-p)))
+    (cl-multiple-value-bind (_ media-files-in-attach-dir)
+        (org-media-note--attach-context)
+      (cond
+       ((string= element-type "citation") "Open citation")
+       (element-type "Open link")
+       (ref-mode (format "Open %s" key))
+       ((> (length media-files-in-attach-dir) 0) "Open attach")
+       (t "Open media")))))
 
 (defun org-media-note--ui-ab-loop-title ()
   (let ((time-a (mpv-get-property "ab-loop-a"))

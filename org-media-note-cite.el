@@ -24,6 +24,15 @@
   "Function to format citation entries."
   :type 'function)
 
+(defcustom org-media-note-cite-priority 'file-first
+  "Priority strategy when both local files and URLs are available for a cite key.
+- 'file-first: Prefer local files over URLs (default)
+- 'url-first: Prefer URLs over local files  
+- 'ask: Always ask user to choose"
+  :type '(choice (const :tag "File first" file-first)
+                 (const :tag "URL first" url-first)
+                 (const :tag "Always ask" ask)))
+
 ;;;; Commands
 ;;;;; bib handling
 (defun org-media-note-cite-get-entry (key)
@@ -123,9 +132,37 @@
        (t (org-media-note--follow-link path time-a time-b))))))
 
 (defun org-media-note-cite--path (key)
-  "Get media file or URL by KEY."
-  (or (org-media-note-cite--file-path key)
-      (org-media-note-cite--url key)))
+  "Get media file or URL by KEY according to `org-media-note-cite-priority'."
+  (when key
+    (let ((file-path (org-media-note-cite--file-path key))
+          (url-path (org-media-note-cite--url key)))
+      (cond
+       ;; No files or URLs found
+       ((and (not file-path) (not url-path)) nil)
+       
+       ;; Only one option available
+       ((and file-path (not url-path)) file-path)
+       ((and url-path (not file-path)) url-path)
+       
+       ;; Both available - apply priority strategy
+       ((eq org-media-note-cite-priority 'file-first)
+        (or file-path url-path))
+       
+       ((eq org-media-note-cite-priority 'url-first)
+        (or url-path file-path))
+       
+       ((eq org-media-note-cite-priority 'ask)
+        (let* ((choices (list (format "Local file: %s" (file-name-nondirectory file-path))
+                              (format "URL: %s" url-path)))
+               (choice (org-media-note--select 
+                        (format "Multiple media sources found for key '%s':" key)
+                        choices)))
+          (if (string-prefix-p "Local file:" choice) 
+              file-path 
+            url-path)))
+       
+       ;; Fallback to file-first behavior
+       (t (or file-path url-path))))))
 
 (defun org-media-note-cite--file-path (key)
   "Get media file by KEY."

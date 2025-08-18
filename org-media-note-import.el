@@ -25,11 +25,11 @@
 ;;;; utils
 (defun org-media-note--import-context (&optional throw-error-on-mismatch)
   "Resolve the source media file or URL and determine media type."
-  (cl-multiple-value-bind (_ key file-by-key url-by-key)
+  (cl-multiple-value-bind (_ key file-or-url-from-key)
       (org-media-note--ref-context)
     (cl-multiple-value-bind (_ media-files-in-attach-dir)
         (org-media-note--attach-context)
-      (let* ((file-or-url-from-key (or file-by-key url-by-key))
+      (let* (
              (file-from-attach (and (= 1 (length media-files-in-attach-dir))
                                     (car media-files-in-attach-dir)))
              (file-or-url-from-mpv (mpv-get-property "path"))
@@ -59,7 +59,7 @@
             )
           ))
         (let* ((source-media (if file-or-url-from-key key file-without-cite))
-               (source-media-path (or file-by-key
+               (source-media-path (or file-or-url-from-key
                                       file-without-cite
                                       (read-file-name "Find media file:")))
                (media-type (org-media-note--file-media-type source-media-path))
