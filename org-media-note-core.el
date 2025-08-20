@@ -1207,23 +1207,53 @@ If TIME-B is non-nil, loop media between TIME-A and TIME-B."
       (message "Please place cursor at a timestamp link of online media."))))
 
 
+(defun org-media-note--get-media-info ()
+  "Get media file/URL and timing information from current context:
+1. Point at a file/http/media link or org-cite citation;
+2. When a citation key and corresponding media is found;
+3. Exactly one media file in attach-dir;
+4. Multiple media files in attach-dir: let user choose;
+5. Else, prompt for media file or URL.
+   Returns a list of (file-or-url start-time end-time)"
+
+  (cl-multiple-value-bind (element-type file-or-url-by-element start-time end-time)
+      (org-media-note--element-context)
+    (cl-multiple-value-bind (_ _ file-or-url-by-key)
+        (org-media-note--ref-context)
+      (cl-multiple-value-bind (attach-dir media-files-in-attach-dir)
+          (org-media-note--attach-context)
+        (let* ((number-of-media-files (length media-files-in-attach-dir))
+               (file-or-url (or file-or-url-by-element
+                                file-or-url-by-key
+                                (and (= 1 number-of-media-files)
+                                     (car media-files-in-attach-dir))))
+               ;; Only preserve timestamps when found from element context
+               (final-start-time (and file-or-url-by-element start-time))
+               (final-end-time (and file-or-url-by-element end-time)))
+          ;; Get file-or-url if not already determined
+          (unless file-or-url
+            (setq file-or-url
+                  (cond
+                   ;; Case 4: Multiple media files in attach-dir, let user choose
+                   ((and attach-dir (> number-of-media-files 1))
+                    (read-file-name "File to play: " attach-dir))
+                   ;; Case 5: No media found, prompt user
+                   (t (if (string= "local"
+                                   (org-media-note--select "Play media from: "
+                                                           (list "local" "online")))
+                          (read-file-name "File to play: ")
+                        (read-string "Url to play: "))))))
+          ;; Return the results
+          (list file-or-url final-start-time final-end-time))))))
+
 (defun org-media-note-copy-mpv-command ()
   "Copy the mpv command to play media at point."
   (interactive)
-  (let* ((link (org-element-context))
-         (type (org-element-property :type link)))
-    (cl-multiple-value-bind (key-or-path time-a time-b)
-        (org-media-note--split-link (org-element-property :path link))
-      (let* ((path (cond
-                    ((string-match "^http" type)
-                     (org-media-note--remove-utm-parameters
-                      (format "%s:%s" type key-or-path)))
-                    ((member type '("audiocite" "videocite"))
-                     (org-media-note-cite--path key-or-path))
-                    (t key-or-path)))
-             (mpv-args (org-media-note--build-mpv-args path time-a
-                                                       time-b))
-             (command (concat (format "mpv \"%s\" " path)
+  (cl-multiple-value-bind (file-or-url start-time end-time)
+      (org-media-note--get-media-info)
+    (when file-or-url
+      (let* ((mpv-args (org-media-note--build-mpv-args file-or-url start-time end-time))
+             (command (concat (format "mpv \"%s\" " file-or-url)
                               (mapconcat 'identity mpv-args " "))))
         (kill-new command)
         (message (format "Copied: %s" command))))))

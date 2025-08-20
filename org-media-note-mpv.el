@@ -16,46 +16,15 @@
 
 ;;;; Commands
 (defun org-media-note-play-smart (arg)
-  "Conditionally open media file in mpv based on the current context.
-1. Point at a file/http/media link or org-cite citation: play it in mpv;
-2. When a citation key and corresponding media is found: play it in mpv;
-3. Exactly one media file in attach-dir: play it in mpv;
-4. Multiple media files in attach-dir: open the attach-dir to select;
-5. Else, prompt the user to:
-   5a. either find a local file to play
-   5b. or to provide a URL for online media.
-
+  "Open media file in mpv based on the current context.
 If ARG argument is provided, force playing from beginning."
   (interactive "P")
-  (cl-multiple-value-bind (_ file-or-url-by-element start-time end-time)
-      (org-media-note--element-context)
-    (cl-multiple-value-bind (_ _ file-or-url-by-key)
-        (org-media-note--ref-context)
-      (cl-multiple-value-bind (attach-dir media-files-in-attach-dir)
-          (org-media-note--attach-context)
-        (let* ((number-of-media-files (length media-files-in-attach-dir))
-               (file-or-url (or file-or-url-by-element
-                                file-or-url-by-key
-                                (and (= 1 number-of-media-files)
-                                     (car media-files-in-attach-dir)))))
-          (cond
-           (file-or-url (org-media-note--follow-link file-or-url
-                                                     (if arg nil start-time)
-                                                     (if arg nil end-time)))
-           ((and attach-dir
-                 (> number-of-media-files 1))
-            (org-media-note--follow-link (read-file-name "File to play: " attach-dir)))
-           (t (if (string= "local"
-                           (org-media-note--select "Play media from: "
-                                                   (list "local" "online")))
-                  (org-media-note--follow-link (read-file-name "File to play: "))
-                (org-media-note-play-online-video)))))))))
-
-(defun org-media-note-play-online-video ()
-  "Open online media file in mpv."
-  (interactive)
-  (let ((video-url (read-string "Url to play: ")))
-    (org-media-note--follow-link video-url)))
+  (cl-multiple-value-bind (file-or-url start-time end-time)
+      (org-media-note--get-media-info)
+    (when file-or-url
+      (org-media-note--follow-link file-or-url
+                                   (if arg nil start-time)
+                                   (if arg nil end-time)))))
 
 (defun org-media-note-seek (direction)
   "Seek in the given DIRECTION according to the configured method and value."
